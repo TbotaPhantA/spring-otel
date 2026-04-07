@@ -10,6 +10,7 @@ This is a Kotlin + Spring Boot project using Gradle as the build system.
 - **Java Version**: 21
 - **Package**: `com.example.otel`
 - **Test Framework**: JUnit 5 (via kotlin-test-junit5)
+- **Additional Tools**: Spring Boot Actuator (health checks, monitoring)
 
 ## Build Commands
 
@@ -24,13 +25,13 @@ This is a Kotlin + Spring Boot project using Gradle as the build system.
 ### Running the Application
 ```bash
 ./gradlew bootRun        # Run the application
-./gradlew bootTestRun     # Run with test classpath
+./gradlew bootTestRun    # Run with test classpath
 ```
 
 ### Testing
 ```bash
-./gradlew test           # Run all tests
-./gradlew test --rerun   # Force re-run all tests (ignore cache)
+./gradlew test                       # Run all tests
+./gradlew test --rerun               # Force re-run all tests (ignore cache)
 
 # Run single test class
 ./gradlew test --tests "com.example.otel.OtelApplicationTests"
@@ -70,7 +71,7 @@ This is a Kotlin + Spring Boot project using Gradle as the build system.
 ### Import Organization
 Imports should follow Kotlin's recommended order:
 1. `kotlin.*` imports
-2. `javax.*` / `java.*` imports  
+2. `javax.*` / `java.*` imports (note: Spring Boot 4.x uses Jakarta EE instead)
 3. Third-party imports (Spring, Jackson, etc.)
 4. Internal project imports
 
@@ -134,14 +135,25 @@ Use import aliases sparingly and only when they clarify intent.
 - Group related dependencies in comments sections if >10 dependencies
 - Use platform dependencies (`enforcedPlatform`) for BOM alignment when needed
 
+### Spring Boot Conventions
+- Use constructor injection over field injection (preferred)
+- Place configuration in `application.yml` or `application.properties`
+- Externalize secrets via environment variables or Spring profiles
+- Use `@ConfigurationProperties` for type-safe configuration binding
+
 ## File Structure
 
 ```
 src/
-├── main/kotlin/com/example/otel/
-│   └── OtelApplication.kt      # Main application class
-└── test/kotlin/com/example/otel/
-    └── OtelApplicationTests.kt  # Integration tests
+├── main/
+│   ├── kotlin/com/example/otel/
+│   │   └── OtelApplication.kt      # Main application class
+│   └── resources/
+│       ├── application.yml         # Default configuration
+│       └── application-local.yml   # Local overrides (gitignored)
+└── test/
+    └── kotlin/com/example/otel/
+        └── OtelApplicationTests.kt  # Integration tests
 ```
 
 ## IDE Configuration
@@ -152,5 +164,8 @@ For VS Code, a `.vscode/` folder is gitignored if needed.
 ## Additional Notes
 
 - The project uses Gradle Toolchains to auto-download Java 21 if not present
-- Spring Boot 4.x uses Jakarta EE (jakarta.*) instead of javax.*
+- Spring Boot 4.x uses Jakarta EE (`jakarta.*`) instead of `javax.*`
 - Actuator is configured for health checks and monitoring endpoints
+- Jackson Kotlin module is included for JSON serialization
+- The compiler uses strict JSR-305 checks (`-Xjsr305=strict`)
+- Default annotation targets are set to `param-property`
