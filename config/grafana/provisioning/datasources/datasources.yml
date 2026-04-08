@@ -16,6 +16,11 @@ datasources:
     url: http://loki:3100
     isDefault: false
     editable: false
+    jsonData:
+      derivedFields:
+        - name: Trace
+          matchRegex: trace_id="([a-fA-F0-9]+)"
+          url: "http://localhost:3200/api/traces/${__value.regex[1]}"
 
   - name: Tempo
     type: tempo
@@ -28,6 +33,8 @@ datasources:
       httpProtocol: http
       tracesToLogs:
         datasourceUid: loki
+        customQuery: true
+        query: '{app="otel"} | trace_id="${__span.traceId}"'
       serviceMap:
         datasourceUid: prometheus
       nodeGraph:

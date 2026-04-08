@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpServletResponseWrapper
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -107,6 +108,9 @@ class TracingFilter(
         
         val scope = span.makeCurrent()
         
+        MDC.put("trace_id", span.spanContext.traceId)
+        MDC.put("span_id", span.spanContext.spanId)
+        
         try {
             span.setAttribute("http.method", httpRequest.method)
             span.setAttribute("http.url", httpRequest.requestURL.toString())
@@ -139,6 +143,8 @@ class TracingFilter(
             span.recordException(e)
             throw e
         } finally {
+            MDC.remove("trace_id")
+            MDC.remove("span_id")
             span.end()
             scope.close()
         }

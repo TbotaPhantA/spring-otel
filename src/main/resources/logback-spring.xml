@@ -4,16 +4,27 @@
 
     <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="otel"/>
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdcKeyName>trace_id</includeMdcKeyName>
-            <includeMdcKeyName>span_id</includeMdcKeyName>
-            <customFields>{"service":"${appName}","app":"${appName}"}</customFields>
-        </encoder>
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <labels>
+            app=${appName}
+            service_name=${appName}
+            trace_id=%mdc{trace_id}
+            span_id=%mdc{span_id}
+        </labels>
+        <message>
+            <pattern>%-5level [%thread] %logger{36} - %msg%n</pattern>
+        </message>
+        <http>
+            <url>http://localhost:3100/loki/api/v1/push</url>
+        </http>
+        <batch>
+            <maxItems>100</maxItems>
+            <timeoutMs>1000</timeoutMs>
+        </batch>
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOKI"/>
     </root>
     <logger name="com.example.otel" level="DEBUG"/>
     <logger name="org.springframework.web" level="DEBUG"/>

@@ -40,6 +40,7 @@ dependencies {
     
     // Observability - Logging
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+    implementation("com.github.loki4j:loki-logback-appender:2.0.3")
     
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
