@@ -75,4 +75,20 @@ class ProductController(private val productService: ProductService) {
         productService.deleteProduct(id)
         return ResponseEntity.noContent().build()
     }
+
+    @GetMapping("/test-500")
+    @Operation(summary = "Test endpoint - returns 500 error 50% of the time")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "No error"),
+        ApiResponse(responseCode = "500", description = "Random internal server error (for testing)")
+    )
+    fun test500(): ResponseEntity<Map<String, Any>> {
+        return if (kotlin.random.Random.nextBoolean()) {
+            ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(mapOf("error" to "Random test 500 error"))
+        } else {
+            ResponseEntity.ok(mapOf("message" to "Lucky! No error this time"))
+        }
+    }
 }

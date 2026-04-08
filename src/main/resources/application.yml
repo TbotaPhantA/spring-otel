@@ -9,9 +9,33 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.90, 0.95, 0.99
+  tracing:
+    sampling:
+      probability: 1.0
+    exporter:
+      otlp:
+        endpoint: http://localhost:4318
+        protocol: http/protobuf
 
 springdoc:
   api-docs:

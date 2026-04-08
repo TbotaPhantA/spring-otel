@@ -10,7 +10,37 @@ This is a Kotlin + Spring Boot project using Gradle as the build system.
 - **Java Version**: 21
 - **Package**: `com.example.otel`
 - **Test Framework**: JUnit 5 (via kotlin-test-junit5)
-- **Additional Tools**: Spring Boot Actuator (health checks, monitoring)
+- **Additional Tools**: Spring Boot Actuator, Micrometer, OpenTelemetry, SpringDoc
+
+## Observability Stack
+
+The project includes a full observability stack with Grafana, Loki (logs), Tempo (traces), Prometheus (metrics), Pyroscope (profiling), and MinIO (S3 storage).
+
+### Service URLs
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Grafana** | http://localhost:3000 | admin/admin |
+| **Prometheus** | http://localhost:9090 | - |
+| **Tempo** | http://localhost:3200 | - |
+| **Pyroscope** | http://localhost:4040 | - |
+| **MinIO Console** | http://localhost:9001 | admin/admin123 |
+| **App Metrics** | http://localhost:8080/actuator/prometheus | - |
+| **Swagger UI** | http://localhost:8080/swagger-ui.html | - |
+
+### Starting the Observability Stack
+
+```bash
+docker compose up -d
+```
+
+### Example Grafana Queries
+
+- **Request Rate**: `rate(http_server_requests_seconds_count{uri="/api/products"}[5m])`
+- **Latency (p95)**: `histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri="/api/products"}[5m]))`
+- **Logs**: `{app="otel"} |= "ERROR"`
+- **Traces**: Use Tempo datasource with trace ID from logs
+- **Profiles**: `pyroscope_cpu{app="otel"}`
 
 ## Build Commands
 
@@ -147,13 +177,45 @@ Use import aliases sparingly and only when they clarify intent.
 src/
 ├── main/
 │   ├── kotlin/com/example/otel/
-│   │   └── OtelApplication.kt      # Main application class
+│   │   ├── OtelApplication.kt         # Main application class
+│   │   ├── config/
+│   │   │   ├── OpenApiConfig.kt        # Swagger/OpenAPI configuration
+│   │   │   └── OtelConfig.kt          # OpenTelemetry SDK + TracingFilter
+│   │   ├── controller/
+│   │   │   └── ProductController.kt    # REST API endpoints
+│   │   ├── dto/
+│   │   │   ├── ProductRequest.kt       # Request DTOs
+│   │   │   └── ProductResponse.kt      # Response DTOs
+│   │   ├── entity/
+│   │   │   └── Product.kt             # JPA entity
+│   │   ├── exception/
+│   │   │   ├── EntityNotFoundException.kt
+│   │   │   └── GlobalExceptionHandler.kt
+│   │   ├── repository/
+│   │   │   └── ProductRepository.kt    # Spring Data JPA repository
+│   │   └── service/
+│   │       └── ProductService.kt       # Business logic
 │   └── resources/
-│       ├── application.yml         # Default configuration
-│       └── application-local.yml   # Local overrides (gitignored)
+│       ├── application.yml             # Default configuration
+│       └── logback-spring.xml         # Logging configuration
 └── test/
     └── kotlin/com/example/otel/
-        └── OtelApplicationTests.kt  # Integration tests
+        └── OtelApplicationTests.kt      # Integration tests
+
+config/
+├── prometheus/
+│   └── prometheus.yml                  # Prometheus scrape config
+├── loki/
+│   └── loki.yml                       # Loki config
+├── tempo/
+│   └── tempo.yml                      # Tempo config
+└── grafana/
+    └── provisioning/
+        ├── datasources/
+        │   └── datasources.yml        # Auto-provisioned datasources
+        └── dashboards/
+            ├── dashboards.yml
+            └── otel-overview.json       # Custom dashboard
 ```
 
 ## IDE Configuration
@@ -169,3 +231,8 @@ For VS Code, a `.vscode/` folder is gitignored if needed.
 - Jackson Kotlin module is included for JSON serialization
 - The compiler uses strict JSR-305 checks (`-Xjsr305=strict`)
 - Default annotation targets are set to `param-property`
+- OpenTelemetry tracing is configured with 100% sampling (100% trace collection)
+- JSON structured logging is enabled for Loki integration
+- All observability data (metrics, logs, traces) is collected via Micrometer + OpenTelemetry
+- Tempo accepts OTLP traces via gRPC on port 43170 (HTTP on 4318)
+- The app sends traces directly to Tempo using manual OpenTelemetry SDK configuration
