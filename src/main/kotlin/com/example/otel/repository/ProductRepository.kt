@@ -1,6 +1,7 @@
 package com.example.otel.repository
 
 import com.example.otel.entity.Product
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.Tracer
 import org.springframework.context.annotation.Lazy
@@ -33,7 +34,7 @@ class TracedProductRepositoryImpl(
         val scope = span.makeCurrent()
         try {
             val result = delegate.findAll()
-            span.setAttribute("db.product.count", result.size.toLong())
+            span.setAttribute(AttributeKey.longKey("db.product.count"), result.size.toLong())
             return result
         } finally {
             span.end()
@@ -48,12 +49,12 @@ class TracedProductRepositoryImpl(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("productId", id.toLong())
-            span.setAttribute("db.operation", "SELECT")
+            span.setAttribute(AttributeKey.longKey("productId"), id.toLong())
+            span.setAttribute(AttributeKey.stringKey("db.operation"), "SELECT")
             
             val result = delegate.findById(id)
             
-            span.setAttribute("db.result.found", result.isPresent)
+            span.setAttribute(AttributeKey.booleanKey("db.result.found"), result.isPresent)
             return result
         } finally {
             span.end()
@@ -68,13 +69,13 @@ class TracedProductRepositoryImpl(
         
         val scope = span.makeCurrent()
         try {
-            product.id?.let { span.setAttribute("productId", it.toLong()) }
-            span.setAttribute("db.operation", if (product.id == null) "INSERT" else "UPDATE")
-            span.setAttribute("product.name", product.name)
+            product.id?.let { span.setAttribute(AttributeKey.longKey("productId"), it.toLong()) }
+            span.setAttribute(AttributeKey.stringKey("db.operation"), if (product.id == null) "INSERT" else "UPDATE")
+            span.setAttribute(AttributeKey.stringKey("product.name"), product.name)
             
             val result = delegate.save(product)
             
-            result.id?.let { span.setAttribute("productId", it.toLong()) }
+            result.id?.let { span.setAttribute(AttributeKey.longKey("productId"), it.toLong()) }
             return result
         } finally {
             span.end()
@@ -89,8 +90,8 @@ class TracedProductRepositoryImpl(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("productId", id.toLong())
-            span.setAttribute("db.operation", "DELETE")
+            span.setAttribute(AttributeKey.longKey("productId"), id.toLong())
+            span.setAttribute(AttributeKey.stringKey("db.operation"), "DELETE")
             
             delegate.deleteById(id)
         } finally {
@@ -106,11 +107,11 @@ class TracedProductRepositoryImpl(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("productId", id.toLong())
-            span.setAttribute("db.operation", "SELECT")
+            span.setAttribute(AttributeKey.longKey("productId"), id.toLong())
+            span.setAttribute(AttributeKey.stringKey("db.operation"), "SELECT")
             
             val result = delegate.existsById(id)
-            span.setAttribute("db.result.exists", result)
+            span.setAttribute(AttributeKey.booleanKey("db.result.exists"), result)
             return result
         } finally {
             span.end()

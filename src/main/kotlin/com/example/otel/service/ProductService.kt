@@ -5,6 +5,7 @@ import com.example.otel.dto.ProductResponse
 import com.example.otel.entity.Product
 import com.example.otel.exception.EntityNotFoundException
 import com.example.otel.repository.ProductRepository
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.Tracer
 import org.springframework.stereotype.Service
@@ -23,7 +24,7 @@ class ProductService(
         val scope = span.makeCurrent()
         try {
             val result = productRepository.tracedFindAll().map { ProductResponse.fromEntity(it) }
-            span.setAttribute("product.count", result.size.toLong())
+            span.setAttribute(AttributeKey.longKey("product.count"), result.size.toLong())
             return result
         } finally {
             span.end()
@@ -38,7 +39,7 @@ class ProductService(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("productId", id.toLong())
+            span.setAttribute(AttributeKey.longKey("productId"), id.toLong())
             val product = productRepository.tracedFindById(id)
                 .orElseThrow { EntityNotFoundException("Product not found with id: $id") }
             return ProductResponse.fromEntity(product)
@@ -55,8 +56,8 @@ class ProductService(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("product.name", request.name)
-            span.setAttribute("product.price", request.price)
+            span.setAttribute(AttributeKey.stringKey("product.name"), request.name)
+            span.setAttribute(AttributeKey.stringKey("product.price"), request.price)
             
             val product = Product(
                 name = request.name,
@@ -66,7 +67,7 @@ class ProductService(
             )
             val saved = productRepository.tracedSave(product)
             
-            span.setAttribute("productId", saved.id?.toLong() ?: 0L)
+            span.setAttribute(AttributeKey.longKey("productId"), saved.id?.toLong() ?: 0L)
             return ProductResponse.fromEntity(saved)
         } finally {
             span.end()
@@ -81,9 +82,9 @@ class ProductService(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("productId", id.toLong())
-            span.setAttribute("product.name", request.name)
-            span.setAttribute("product.price", request.price)
+            span.setAttribute(AttributeKey.longKey("productId"), id.toLong())
+            span.setAttribute(AttributeKey.stringKey("product.name"), request.name)
+            span.setAttribute(AttributeKey.stringKey("product.price"), request.price)
             
             val existing = productRepository.tracedFindById(id)
                 .orElseThrow { EntityNotFoundException("Product not found with id: $id") }
@@ -109,7 +110,7 @@ class ProductService(
         
         val scope = span.makeCurrent()
         try {
-            span.setAttribute("productId", id.toLong())
+            span.setAttribute(AttributeKey.longKey("productId"), id.toLong())
             
             if (!productRepository.tracedExistsById(id)) {
                 throw EntityNotFoundException("Product not found with id: $id")

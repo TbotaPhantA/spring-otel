@@ -1,6 +1,7 @@
 package com.example.otel.config
 
 import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
@@ -114,7 +115,7 @@ class TracingFilter(
             
             if (!isTest500Endpoint) {
                 extractProductIdFromPath(requestPath)?.let {
-                    span.setAttribute("productId", it)
+                    span.setAttribute(AttributeKey.stringKey("productId"), it)
                 }
             }
             
@@ -126,7 +127,7 @@ class TracingFilter(
             if (!isTest500Endpoint && httpRequest.method == "POST" && statusCode in 200..299) {
                 wrappedResponse.capturedBody?.let { body ->
                     extractProductIdFromResponseBody(body)?.let { productId ->
-                        span.setAttribute("productId", productId)
+                        span.setAttribute(AttributeKey.stringKey("productId"), productId)
                     }
                 }
             }
